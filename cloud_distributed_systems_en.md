@@ -1,117 +1,134 @@
+---
+title: Distributed Systems in One Lesson — Notes (English)
+tags: [distributed-systems, storage, computation, messaging, english]
+updated: 2025-09-27
+---
+
 # Distributed Systems in One Lesson — Notes (Tim Berglund)
 
-## What is a Distributed System?
+## 1. What is a Distributed System?
 A **collection of independent computers** that **appears as a single system** to users.
 
 **Core properties:**
-- **Concurrency**: many nodes run at the same time.  
+- **Concurrency**: multiple nodes execute simultaneously.  
 - **Independent failure**: any node can fail on its own.  
-- **No global clock**: clocks are **not perfectly synchronized**, so time/order is tricky.  
+- **No global clock**: clocks are **not perfectly synchronized**, making time and ordering tricky.  
 
 ---
 
-## The 3 Topics
-- **Storage**
-- **Computation**
-- **Messaging**
+## 2. The Three Topics
+- **Storage**  
+- **Computation**  
+- **Messaging**  
 
 ---
 
-## 1) Storage
+## 3. Storage
 
-### 1.1 Single-Master Storage
-- One primary database handles **reads/writes**.  
-- **Strong consistency** (read-after-write).  
-- Scales **until** the single node becomes a bottleneck.  
+### 3.1 Single-Master Storage
+- One primary database handles all **reads and writes**.  
+- Guarantees **strong consistency** (read-after-write).  
+- Limitation: bottleneck once the primary cannot scale further.  
 
-### 1.2 Read Replication
-- **Leader/Follower**: writes go to leader, followers replicate.  
-- Pros: scales **reads**.  
-- Cons: **eventual consistency** (stale reads possible).  
+### 3.2 Read Replication
+- **Leader/Follower** pattern: writes go to leader, followers replicate.  
+- **Pros**: scales read throughput.  
+- **Cons**: eventual consistency, stale reads possible.  
 
-### 1.3 Sharding
-- Split data by **shard key** (e.g., username ranges).  
-- Pros: scales **writes** and data size.  
-- Cons: **cross-shard joins** hard/expensive → often need **denormalization**.  
+### 3.3 Sharding
+- Split data by **shard key** (e.g., user ID ranges).  
+- **Pros**: scales writes and dataset size.  
+- **Cons**: cross-shard joins are expensive, often require **denormalization**.  
 
-### 1.4 Consistent Hashing
-- Hash key → map onto **hash ring** → store on responsible node(s).  
-- Supports **elastic growth** (adding/removing nodes moves few keys).  
+### 3.4 Consistent Hashing
+- Keys hashed onto a **hash ring** → assigned to nodes.  
+- Supports **elastic scaling**: adding/removing nodes moves only a subset of keys.  
 
-### 1.5 Quorum & Tunable Consistency
+### 3.5 Quorum & Tunable Consistency
 - With replication factor `N`:  
-  - Require `W` nodes for write, `R` nodes for read.  
-  - **Rule:** `R + W > N` ⇒ strong consistency.  
+  - Require `W` nodes to confirm a write.  
+  - Require `R` nodes to confirm a read.  
+  - **Rule**: `R + W > N` ensures strong consistency.  
 
-### 1.6 CAP Theorem
-- Cannot have all **Consistency (C)**, **Availability (A)**, **Partition tolerance (P)**.  
+### 3.6 CAP Theorem
+- Cannot simultaneously achieve **Consistency (C)**, **Availability (A)**, and **Partition tolerance (P)**.  
 - In a partition:  
-  - **CP system** rejects some requests to stay consistent.  
-  - **AP system** serves stale data but stays available.  
+  - **CP system**: sacrifices availability, keeps consistency.  
+  - **AP system**: sacrifices consistency, stays available.  
 
 ---
 
-## 2) Computation
+## 4. Computation
 
-### 2.1 MapReduce
+### 4.1 MapReduce
 - **Map → Shuffle → Reduce**.  
-- Classic **word count** example.  
-- Pros: scales batch jobs.  
-- Cons: high latency, hard to program.  
+- Example: word count.  
+- **Pros**: batch scalability.  
+- **Cons**: high latency, developer-unfriendly.  
 
-### 2.2 Hadoop vs Spark
+### 4.2 Hadoop vs Spark
 - **Hadoop**: batch-oriented, tied to HDFS.  
-- **Spark**: higher-level APIs (RDD/Dataset), storage-agnostic, faster & easier for devs.  
+- **Spark**: faster, storage-agnostic, provides RDD/Dataset APIs.  
 
-### 2.3 Stream Processing
-- Compute on **data in flight**, not only after storage.  
-- Kafka Streams, Flink → **low latency, real-time** analytics.  
+### 4.3 Stream Processing
+- Process **data in motion** instead of after storage.  
+- Tools: **Kafka Streams, Flink** → enable **low latency, real-time** analytics.  
 
-### 2.4 Lambda Architecture (anti-pattern)
-- Dual path: batch + stream.  
-- Problem: duplicate logic.  
-- Trend: unify with modern stream frameworks.  
+### 4.4 Lambda Architecture (anti-pattern)
+- Maintains both batch and stream paths.  
+- Issues: duplicate logic, higher complexity.  
+- Modern trend: unified stream-first architecture.  
 
 ---
 
-## 3) Messaging
+## 5. Messaging
 
-### 3.1 Why Messaging
+### 5.1 Why Messaging?
 - Enables **loose coupling** in microservices.  
-- Avoids shared-database bottleneck.  
+- Avoids shared-database bottlenecks.  
 
-### 3.2 Kafka — Key Concepts
-- **Message**: event/record.  
-- **Topic**: named log of messages.  
-- **Producer**: writes to topic.  
-- **Consumer**: reads from topic.  
+### 5.2 Kafka — Key Concepts
+- **Message**: single event or record.  
+- **Topic**: append-only log of messages.  
+- **Producer**: writes events to a topic.  
+- **Consumer**: reads events from a topic.  
 - **Broker**: Kafka server node.  
 
-### 3.3 Partitioning & Ordering
-- Topic split into **partitions**.  
-- Guarantees **ordering within partition**, not globally.  
-- Use **keyed partitioning** to keep related events ordered.  
+### 5.3 Partitioning & Ordering
+- Topics split into **partitions**.  
+- Guarantees **ordering within a partition**, not across partitions.  
+- **Keyed partitioning** ensures related events are ordered.  
 
-### 3.4 Replication & Fault Tolerance
+### 5.4 Replication & Fault Tolerance
 - Partitions replicated across brokers.  
-- **Leader election** if one broker fails.  
+- **Leader election** handles broker failures.  
 
-### 3.5 Consumer Groups
-- Consumers share partitions for **parallelism**.  
-- Offsets track progress (allow **replay**).  
+### 5.5 Consumer Groups
+- Consumers coordinate to share partitions.  
+- Offsets track progress, enabling **replay**.  
 
-### 3.6 Delivery Semantics
-- **At-least-once** (default, may see duplicates).  
-- **Exactly-once** possible with idempotent producers & transactions.  
+### 5.6 Delivery Semantics
+- **At-least-once**: default, may cause duplicates.  
+- **Exactly-once**: possible with idempotent producers + transactions.  
 
-### 3.7 Retention & Event Log
-- Topics can keep data for **time/size/compaction**.  
-- Events can be **replayed** to rebuild state or feed new services.  
+### 5.7 Retention & Event Log
+- Retention based on **time, size, or compaction**.  
+- Stored events can be **replayed** to rebuild state or bootstrap new services.  
 
 ---
 
-## Key Takeaways
-- Distributed systems scale but force **trade-offs**.  
-- Know your **consistency, latency, failure** choices.  
-- Use purpose-built tools: **Cassandra (storage)**, **Spark (compute)**, **Kafka (messaging)**.  
+## 6. Key Takeaways
+- Distributed systems enable scale but introduce **trade-offs**.  
+- Critical to understand **consistency, latency, and failure modes**.  
+- Purpose-built tools:  
+  - **Cassandra / DynamoDB** → storage  
+  - **Spark / Flink** → computation  
+  - **Kafka** → messaging  
 
+---
+
+## 📚 References
+- Tim Berglund — *Distributed Systems in One Lesson*  
+- [CAP Theorem](https://en.wikipedia.org/wiki/CAP_theorem)  
+- [Jepsen: Consistency Testing](https://jepsen.io/)  
+- [Kafka Documentation](https://kafka.apache.org/documentation/)  
